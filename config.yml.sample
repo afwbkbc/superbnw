@@ -1,0 +1,22 @@
+Jabber:
+	ID:
+	Password:
+
+Antishit:
+	Enabled: true
+	Blacklist:
+		- anonymous
+
+GPG:
+	Enabled: false
+	KeyPath:
+	
+Upyachka:
+	Enabled: true
+	PreemptiveStrikes: false
+
+Logger:
+	LogLevel: 1
+
+Debug:
+	Backtrace: false

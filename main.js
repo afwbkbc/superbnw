@@ -1,2 +1,4 @@
-console.log( 'kek' );
-
+var engine = new ( require( './Source/Engine' ) )();
+	
+engine.Init();
+engine.Run();
