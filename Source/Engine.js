@@ -3,7 +3,7 @@ class Engine {
 	constructor() {
 		
 		this.M = {};
-		for( var m of [ 'Config', 'Logger', 'Jabber' ] )
+		for( var m of [ 'Config', 'Logger', 'Jabber', 'Bnw' ] )
 			this.M[ m ] = new ( require( './Module/' + m ) )( m, this );
 		
 	}
@@ -32,7 +32,8 @@ class Engine {
 	
 	Run() {
 		try {
-			this.M.Jabber.Connect({
+			
+			this.M.Jabber.SetCallbacks({
 				OnConnecting: ( jabber_id ) => {
 					this.Log( 1, 'Connecting as ' + jabber_id + ' ...' );
 				},
@@ -46,10 +47,10 @@ class Engine {
 					this.Log( 1, 'Reconnecting in ' + reconnect_seconds + ' seconds.' );
 				},
 				OnSend: ( message ) => {
-					console.log( 'SEND', message.from, message.text );
+					console.log( 'SEND', message.from, message.to, message.text );
 				},
 				OnReceive: ( message ) => {
-					console.log( 'RECEIVE', message.to, message.text );
+					console.log( 'RECEIVE', message.from, message.to, message.text );
 				},
 				OnError: ( error ) => {
 					this.Log( 1, 'Error: ' + error + '!' );
@@ -57,6 +58,9 @@ class Engine {
 						this.HandleError( new Error( 'Login failed. Please configure valid Jabber ID and/or password and try again.' ) );
 				},
 			});
+			
+			this.M.Jabber.Connect();
+			
 		} catch ( e ) {
 			return this.HandleError( e );
 		}
@@ -64,7 +68,7 @@ class Engine {
 	
 	Log( level, text ) {
 		if ( this.M && this.M.Logger )
-			return this.M.Logger.Log( level, 'SuperBNW', text );
+			return this.M.Logger.Log( level, 'SuperBnW', text );
 	}
 	
 }

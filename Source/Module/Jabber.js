@@ -15,10 +15,15 @@ class Jabber extends require( './Module' ) {
 		this.ServerFeatures = [];
 		this.ResponseCallbacks = {};
 
+		this.Callbacks = {};
 		this.Handlers = {};
 	}
 	
-	Connect( callbacks ) {
+	SetCallbacks( callbacks ) {
+		this.Callbacks = callbacks;
+	}
+	
+	Connect() {
 		
 		if ( this.Connection )
 			this.Disconnect();
@@ -28,8 +33,7 @@ class Jabber extends require( './Module' ) {
 		if ( !this.Config.Password )
 			throw new Error( 'Please specify Jabber password!' );
 		
-		this.Callbacks = callbacks;
-		callbacks.OnConnecting( this.Config.ID );
+		this.Callbacks.OnConnecting( this.Config.ID );
 		
 		var addr = this.JABBER( this.Config.ID );
 		
@@ -48,130 +52,25 @@ class Jabber extends require( './Module' ) {
 		
 		this.Client
 			.on( 'error', ( e ) => {
-				callbacks.OnError( e.toString() );
+				this.Callbacks.OnError( e.toString() );
 				this.Disconnect();
 			})
 			.on( 'offline', () => {
 				this.Disconnect();
 			})
 			.on( 'online', () => {
-				//callbacks.OnConnect();
+				this.Log( 2, 'Getting server info' );
+				this.SendIq( 'query' );
 			})
 			.on('status', (status, value) => {
 				this.Log( 2, 'Status: ' + status );
-				if ( status == 'online' ) {
-					
-					this.Log( 2, 'Getting server info' );
-					this.SendIq( 'query' );
-					
-					/*this.Client.send( // set 'online' status
-						this.XML( 'presence',
-							this.XML( 'priority', [ 1 ] )
-						)
-					);*/
-				}
 			})
-			//.on('send', data => console.log('send:', data.toString ? data.toString() : data))
 			.on('stanza', ( stanza ) => {
-				
 				this.ReceiveStanza( stanza );
-				/*if ( stanza.name == 'presence' ) {
-					console.log( 'PRESENCE', stanza.attrs.from );
-					if ( stanza.attrs.from == 'bnw@bnw.im' ) {
-						// only here we are truly online
-						if ( !this.IsOnline ) {
-							this.IsOnline = true;
-							callbacks.OnConnect();
-							this.Client.send(
-								this.XML( 'message', { type: 'chat', to: 'bnw@bnw.im', id: Math.random() },
-									this.XML( 'body', {}, 'ON' )
-								)
-							)
-							this.Client.send(
-								this.XML( 'message', { type: 'chat', to: this.Config.ID, id: Math.random() },
-									this.XML( 'body', {}, 'test broadcast' )
-								)
-							);
-						}
-					}
-				}
-				else if ( stanza.name == 'message' ) {
-					var msg = stanza.getChild( 'body' ).text();
-					console.log( 'MESSAGE', stanza.attrs.from, msg );
-					if ( stanza.attrs.from.substring( 0, this.Config.ID.length ) == this.Config.ID ) {
-						console.log( 'PONG' );
-						this.Client.send(
-							this.XML( 'message', { type: 'chat', to: stanza.attrs.from, id: Math.random() },
-								this.XML( 'body', {}, 'PONG' )
-							)
-						);
-					}
-				}
-				else if ( stanza.name == 'iq' ) {
-					switch ( stanza.attrs.type ) {
-						case 'get': {
-							for ( var c of stanza.children ) {
-								console.log( 'C', c );
-							}
-							break;
-						}
-						case 'result': {
-							// nobody cares
-							break;
-						}
-						default:
-							console.log( 'unknown iq type "' + stanza.attrs.type + '"', stanza );
-					}
-				}
-				else {
-					console.log( 'S', stanza );
-				}
-				/*console.log('stanza string:', stanza.toString())
-				if (stanza.name == "message") {
-					const msg = stanza.getChild('body').text()
-					if (msg == "close") {
-						client.close()
-						return
-					}
-					const to = stanza.attrs.from
-					client.send(
-						xml('message', { to },
-							xml('body', {}, msg)
-						)
-					)
-				}*/
 			})
 			.start()
 			.catch( (e)=> {} )
 		;
-		
-		/*this.Connection = new this.XMPP.Client({
-			jid: this.Config.JID,
-			password: this.Config.Password,
-		});
-		
-		this.Connection
-			.on( 'error', ( error ) => {
-				settings.OnError( error.toString() );
-				this.Disconnect();
-			})
-			.on( 'offline', () => {
-				this.Disconnect();
-			})
-			.on( 'online', () => {
-				settings.OnConnect();
-			})
-			.on( 'stanza', ( stanza ) => {
-				console.log( 'MESSAGE', stanza.attrs );
-				if ( stanza.attrs.from == 'bnw@bnw.im' ) {
-					var body = stanza.getChild( 'body' );
-					if ( body ) {
-						var message = body.getText();
-						settings.OnMessage( message );
-					}
-				}
-			})
-		;*/
 		
 	}
 	
@@ -215,8 +114,8 @@ class Jabber extends require( './Module' ) {
 			return;
 		}
 		
-		if ( stanza.attrs.from == this.Config.ID + '/' + this.Resource )
-			return; // don't react to own messages
+		//if ( stanza.attrs.from == this.From )
+			//return; // don't react to own messages
 		
 		this.ReceiveMessage( stanza.name, stanza );
 	}
@@ -232,11 +131,17 @@ class Jabber extends require( './Module' ) {
 	}
 	
 	Send( to, text ) {
+		this.Log( 2, 'Sent: <' + to + '> ' + text );
 		this.Client.send(
 			this.XML( 'message', { type: 'chat', to: to, id: this.MD5( Math.random() ) },
 				this.XML( 'body', {}, text )
 			)
 		);
+		this.Callbacks.OnSend({
+			from: this.From,
+			to: to,
+			text: text,
+		});
 	}
 	
 	SendXml( data ) {
@@ -294,8 +199,6 @@ class Jabber extends require( './Module' ) {
 	}
 	
 	SetSessionId( id ) {
-		//if ( this.SessionId )
-			//this.Log( 2, '(warning) duplicate SetSession' );
 		this.Log( 2, 'SessionId: ' + id );
 		this.SessionId = id;
 	}
@@ -304,9 +207,9 @@ class Jabber extends require( './Module' ) {
 		if ( jid == this.BnwJid ) {
 			this.Log( 2, 'Online: ' + jid + ' ( ' + status + ' )' );
 			
-			this.Send( this.BnwJid, 'ON' );
-			
 			this.Callbacks.OnConnect();
+			
+			this.Send( this.BnwJid, 'ON' );
 			
 		}
 	}
