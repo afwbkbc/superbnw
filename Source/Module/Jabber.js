@@ -8,19 +8,12 @@ class Jabber extends require( './Module' ) {
 		this.JABBER = require( '@xmpp/jid' );
 		this.MD5 = require( 'md5' );
 		
-		this.BnwJid = 'bnw@bnw.im';
-		
 		this.IsOnline = false;
 		this.SessionId = null;
 		this.ServerFeatures = [];
 		this.ResponseCallbacks = {};
 
-		this.Callbacks = {};
 		this.Handlers = {};
-	}
-	
-	SetCallbacks( callbacks ) {
-		this.Callbacks = callbacks;
 	}
 	
 	Connect() {
@@ -33,7 +26,7 @@ class Jabber extends require( './Module' ) {
 		if ( !this.Config.Password )
 			throw new Error( 'Please specify Jabber password!' );
 		
-		this.Callbacks.OnConnecting( this.Config.ID );
+		this.RunCallbacks( 'OnConnecting', this.Config.ID );
 		
 		var addr = this.JABBER( this.Config.ID );
 		
@@ -52,7 +45,7 @@ class Jabber extends require( './Module' ) {
 		
 		this.Client
 			.on( 'error', ( e ) => {
-				this.Callbacks.OnError( e.toString() );
+				this.RunCallbacks( 'OnError', e.toString() );
 				this.Disconnect();
 			})
 			.on( 'offline', () => {
@@ -130,6 +123,25 @@ class Jabber extends require( './Module' ) {
 		return this.SendMessage( 'iq/' + message, data, callback );
 	}
 	
+	GetJid( full_address ) {
+		// cut off resource part and return
+		var pos = full_address.indexOf( '/' );
+		if ( pos >= 0 )
+			return full_address.substring( 0, pos );
+		else
+			return full_address;
+	}
+	
+	MessageAttrs( attrs, text ) {
+		return {
+			from_full: attrs.from,
+			from: this.GetJid( attrs.from ),
+			to_full: attrs.to,
+			to: this.GetJid( attrs.to ),
+			text: text,
+		}
+	}
+	
 	Send( to, text ) {
 		this.Log( 2, 'Sent: <' + to + '> ' + text );
 		this.Client.send(
@@ -137,11 +149,10 @@ class Jabber extends require( './Module' ) {
 				this.XML( 'body', {}, text )
 			)
 		);
-		this.Callbacks.OnSend({
+		this.RunCallbacks( 'OnSend', this.MessageAttrs({
 			from: this.From,
 			to: to,
-			text: text,
-		});
+		}, text ));
 	}
 	
 	SendXml( data ) {
@@ -174,7 +185,7 @@ class Jabber extends require( './Module' ) {
 			this.ServerFeatures = [];
 			var client = this.Client;
 			delete this.Client;
-			this.Callbacks.OnDisconnect();
+			this.RunCallbacks( 'OnDisconnect' );
 		}
 	}
 	
@@ -184,7 +195,7 @@ class Jabber extends require( './Module' ) {
 		
 		if ( this.ReconnectTimeout )
 			clearTimeout( this.ReconnectTimeout );
-		this.Callbacks.OnReconnect( reconnect_seconds );
+		this.RunCallbacks( 'OnReconnect', reconnect_seconds );
 		this.ReconnectTimeout = setTimeout( () => {
 			delete this.ReconnectTimeout;
 			this.Connect( this.Callbacks );
@@ -204,14 +215,11 @@ class Jabber extends require( './Module' ) {
 	}
 	
 	SetOnline( jid, status ) {
-		if ( jid == this.BnwJid ) {
-			this.Log( 2, 'Online: ' + jid + ' ( ' + status + ' )' );
-			
-			this.Callbacks.OnConnect();
-			
-			this.Send( this.BnwJid, 'ON' );
-			
-		}
+		
+		this.Log( 2, 'Online: ' + jid + ' ( ' + status + ' )' );
+		
+		this.RunCallbacks( 'OnUserOnline', jid, status );
+		
 	}
 	
 	RegisterResponseCallback( callback ) {

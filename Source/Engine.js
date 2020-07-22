@@ -32,32 +32,29 @@ class Engine {
 	
 	Run() {
 		try {
-			
 			this.M.Jabber.SetCallbacks({
 				OnConnecting: ( jabber_id ) => {
 					this.Log( 1, 'Connecting as ' + jabber_id + ' ...' );
 				},
+				OnReconnect: ( reconnect_seconds ) => {
+					this.Log( 1, 'Reconnecting in ' + reconnect_seconds + ' seconds.' );
+				},
+				OnError: ( error ) => {
+					this.Log( 2, 'Error! ' + error + '!' );
+					if ( error == 'Invalid username or password' )
+						return this.HandleError( new Error( 'Login failed. Please configure valid Jabber ID and/or password and try again.' ) );
+				},
+			})
+			
+			this.M.Bnw.SetCallbacks({
 				OnConnect: () => {
 					this.Log( 1, 'Ready!' );
 				},
 				OnDisconnect: () => {
 					this.Log( 1, 'Connection lost.' );
 				},
-				OnReconnect: ( reconnect_seconds ) => {
-					this.Log( 1, 'Reconnecting in ' + reconnect_seconds + ' seconds.' );
-				},
-				OnSend: ( message ) => {
-					console.log( 'SEND', message.from, message.to, message.text );
-				},
-				OnReceive: ( message ) => {
-					console.log( 'RECEIVE', message.from, message.to, message.text );
-				},
-				OnError: ( error ) => {
-					this.Log( 1, 'Error: ' + error + '!' );
-					if ( error == 'Invalid username or password' )
-						this.HandleError( new Error( 'Login failed. Please configure valid Jabber ID and/or password and try again.' ) );
-				},
 			});
+			this.M.Bnw.AttachToConnection( this.M.Jabber );
 			
 			this.M.Jabber.Connect();
 			

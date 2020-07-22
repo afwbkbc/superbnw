@@ -10,11 +10,7 @@ class received extends require( './message' ) {
 		
 		if ( body ) {
 			this.C.Log( 2, 'Received: <' + message.attrs.from + '> ' + body.text() );
-			this.C.Callbacks.OnReceive({
-				from: message.attrs.from,
-				to: message.attrs.to,
-				text: body.text(),
-			});
+			this.C.RunCallbacks( 'OnReceive', this.C.MessageAttrs( message.attrs, body.text() ) );
 		}
 		
 	}

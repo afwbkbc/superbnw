@@ -10,11 +10,7 @@ class sent extends require( './message' ) {
 		
 		if ( body ) {
 			this.C.Log( 2, 'Sent: <' + message.attrs.from + '> ' + body.text() );
-			this.C.Callbacks.OnSend({
-				from: message.attrs.from,
-				to: message.attrs.to,
-				text: body.text(),
-			});
+			this.C.RunCallbacks( 'OnSend', this.C.MessageAttrs( message.attrs, body.text() ) );
 		}
 		
 	}
