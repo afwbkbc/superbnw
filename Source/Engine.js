@@ -37,7 +37,7 @@ class Engine {
 					this.Log( 1, 'Connecting as ' + jabber_id + ' ...' );
 				},
 				OnConnect: () => {
-					this.Log( 1, 'Connection established.' );
+					this.Log( 1, 'Ready!' );
 				},
 				OnDisconnect: () => {
 					this.Log( 1, 'Connection lost.' );
@@ -45,8 +45,11 @@ class Engine {
 				OnReconnect: ( reconnect_seconds ) => {
 					this.Log( 1, 'Reconnecting in ' + reconnect_seconds + ' seconds.' );
 				},
-				OnMessage: ( message ) => {
-					console.log( 'MESSAGE', message );
+				OnSend: ( message ) => {
+					console.log( 'SEND', message.from, message.text );
+				},
+				OnReceive: ( message ) => {
+					console.log( 'RECEIVE', message.to, message.text );
 				},
 				OnError: ( error ) => {
 					this.Log( 1, 'Error: ' + error + '!' );

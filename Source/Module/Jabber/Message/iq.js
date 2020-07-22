@@ -2,13 +2,11 @@ class iq extends require( '../Message' ) {
 	
 	Receive( data ) {
 		
-		if ( data.attrs.type === 'result' ) {
-			if ( data.attrs.id ) {
-				this.C.SetSessionId( data.attrs.id );
-			}
+		if ( data.children.length >= 1 ) {
+			return this.C.ReceiveMessage( 'iq/' + data.children[ 0 ].name, data.children[ 0 ] );
 		}
 		else {
-			console.log( 'HANDLE', this.Name, data );
+			console.log( 'UNEXPECTED CHILDREN COUNT', this.Name, data );
 		}
 	}
 	

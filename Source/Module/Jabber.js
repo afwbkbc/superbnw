@@ -6,11 +6,14 @@ class Jabber extends require( './Module' ) {
 		this.CLIENT = client;
 		this.XML = xml;
 		this.JABBER = require( '@xmpp/jid' );
+		this.MD5 = require( 'md5' );
 		
 		this.BnwJid = 'bnw@bnw.im';
 		
 		this.IsOnline = false;
 		this.SessionId = null;
+		this.ServerFeatures = [];
+		this.ResponseCallbacks = {};
 
 		this.Handlers = {};
 	}
@@ -25,16 +28,19 @@ class Jabber extends require( './Module' ) {
 		if ( !this.Config.Password )
 			throw new Error( 'Please specify Jabber password!' );
 		
-		this.LastCallbacks = callbacks;
+		this.Callbacks = callbacks;
 		callbacks.OnConnecting( this.Config.ID );
 		
 		var addr = this.JABBER( this.Config.ID );
 		
 		this.Resource = 'SuperBnW';
 		
+		this.From = addr.getLocal() + '@' + addr.getDomain() + '/' + this.Resource;
+		this.Server = addr.getDomain();
+		
 		this.Client = new this.CLIENT({
-			service: addr.getDomain(),
-			domain: addr.getDomain(),
+			service: this.Server,
+			domain: this.Server,
 			resource: this.Resource,
 			username: addr.getLocal(),
 			password: this.Config.Password,
@@ -55,7 +61,8 @@ class Jabber extends require( './Module' ) {
 				this.Log( 2, 'Status: ' + status );
 				if ( status == 'online' ) {
 					
-					this.SendPresence();
+					this.Log( 2, 'Getting server info' );
+					this.SendIq( 'query' );
 					
 					/*this.Client.send( // set 'online' status
 						this.XML( 'presence',
@@ -68,7 +75,6 @@ class Jabber extends require( './Module' ) {
 			.on('stanza', ( stanza ) => {
 				
 				this.ReceiveStanza( stanza );
-				
 				/*if ( stanza.name == 'presence' ) {
 					console.log( 'PRESENCE', stanza.attrs.from );
 					if ( stanza.attrs.from == 'bnw@bnw.im' ) {
@@ -183,9 +189,23 @@ class Jabber extends require( './Module' ) {
 	}
 	
 	ReceiveMessage( message, data ) {
-		var handler = this.GetHandler( message );
-		if ( handler )
-			handler.Receive( data );
+		if ( data.attrs && data.attrs.id && typeof( this.ResponseCallbacks[ data.attrs.id ] ) === 'function' ) {
+			var cb = this.ResponseCallbacks[ data.attrs.id ];
+			delete this.ResponseCallbacks[ data.attrs.id ];
+			if ( data.children.length >= 1 )
+				return cb( data.children[ 0 ] );
+			else
+				return cb( null );
+		}
+		else {
+			var handler = this.GetHandler( message );
+			if ( handler ) {
+				var body = data.getChild( 'body' );
+				if ( body )
+					data.body = body;
+				return handler.Receive( data );
+			}
+		}
 	}
 	
 	ReceiveStanza( stanza ) {
@@ -201,14 +221,22 @@ class Jabber extends require( './Module' ) {
 		this.ReceiveMessage( stanza.name, stanza );
 	}
 
-	SendMessage( message, data ) {
+	SendMessage( message, data, callback ) {
 		var handler = this.GetHandler( message );
 		if ( handler )
-			handler.Send( data );
+			handler.Send( data ? data : {}, callback );
 	}
 	
-	SendStanza( type, ...args ) {
-		console.log( 'SEND', type, args.length, ...args );
+	SendIq( message, data, callback ) {
+		return this.SendMessage( 'iq/' + message, data, callback );
+	}
+	
+	Send( to, text ) {
+		this.Client.send(
+			this.XML( 'message', { type: 'chat', to: to, id: this.MD5( Math.random() ) },
+				this.XML( 'body', {}, text )
+			)
+		);
 	}
 	
 	SendXml( data ) {
@@ -237,9 +265,11 @@ class Jabber extends require( './Module' ) {
 			this.IsOnline = false;
 			this.Client.close().catch( () => {} );
 			this.SessionId = null;
+			this.ResponseCallbacks = {};
+			this.ServerFeatures = [];
 			var client = this.Client;
 			delete this.Client;
-			this.LastCallbacks.OnDisconnect();
+			this.Callbacks.OnDisconnect();
 		}
 	}
 	
@@ -249,16 +279,17 @@ class Jabber extends require( './Module' ) {
 		
 		if ( this.ReconnectTimeout )
 			clearTimeout( this.ReconnectTimeout );
-		this.LastCallbacks.OnReconnect( reconnect_seconds );
+		this.Callbacks.OnReconnect( reconnect_seconds );
 		this.ReconnectTimeout = setTimeout( () => {
 			delete this.ReconnectTimeout;
-			this.Connect( this.LastCallbacks );
+			this.Connect( this.Callbacks );
 		}, reconnect_seconds * 1000 );
 	}
 	
 	SendPresence() {
+		this.Log( 2, 'Broadcasting presence' );
 		this.SendMessage( 'presence', {
-			priority: 1,
+			priority: 100,
 		});
 	}
 	
@@ -273,6 +304,43 @@ class Jabber extends require( './Module' ) {
 		if ( jid == this.BnwJid ) {
 			this.Log( 2, 'Online: ' + jid + ' ( ' + status + ' )' );
 			
+			this.Send( this.BnwJid, 'ON' );
+			
+			this.Callbacks.OnConnect();
+			
+		}
+	}
+	
+	RegisterResponseCallback( callback ) {
+		var id;
+		do {
+			id = this.MD5( Math.random() );
+		} while ( typeof( this.ResponseCallbacks[ id ] ) !== 'undefined' );
+		this.ResponseCallbacks[ id ] = callback;
+		return id;
+	}
+	
+	SetServerFeatures( features ) {
+		this.Log( 4, 'Server features: ' + JSON.stringify( features ) );
+		this.ServerFeatures = features;
+		
+		if ( this.ServerFeatures.indexOf( 'urn:xmpp:carbons:2' ) >= 0 ) {
+			
+			this.Log( 2, 'Enabling XEP-0280' );
+			this.SendIq( 'enable', {
+				xmlns: 'urn:xmpp:carbons:2',
+			}, ( response ) => {
+				if ( response.error ) {
+					this.Log( 3, 'Error: ' + response.error );
+					this.Log( 1, 'Warning! Failed to enable XEP-0280 on your server ( ' + this.Server + ' ), continuing without, bot may be unreliable if used simultaneously with another xmpp client on same account!' );
+				}
+				this.SendPresence();
+			});
+			
+		}
+		else {
+			this.Log( 1, 'Warning! Your xmpp server ( ' + this.Server + ' ) does not support XEP-0280, bot may be unreliable if used simultaneously with another xmpp client on same account!' );
+			this.SendPresence();
 		}
 	}
 }

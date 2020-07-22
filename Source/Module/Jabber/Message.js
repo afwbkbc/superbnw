@@ -5,6 +5,10 @@ class Message {
 		this.Name = name;
 	}
 	
+	Log( level, text ) {
+		return this.C.Log( level, text );
+	}
+	
 	// override these
 	Send( data ) {}
 	Receive( data ) {}
