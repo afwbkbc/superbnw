@@ -54,12 +54,21 @@ class Engine {
 				OnDisconnect: () => {
 					this.Log( 1, 'Connection lost.' );
 				},
-				OnReceive: ( data ) => {
-					if ( data.comment_id ) {
-						console.log( 'POST!!!!', data );
+				OnSend: ( data ) => {
+					if ( data.reply_id ) {
+						console.log( 'SENT REPLY!!!!', data );
 					}
 					else {
-						console.log( 'REPLY!!!', data );
+						console.log( 'SENT POST!!!', data );
+					}
+					this.M.Bnw.Send( 'D ' + ( data.reply_id ? data.reply_id : data.post_id ) );
+				},
+				OnReceive: ( data ) => {
+					if ( data.reply_id ) {
+						console.log( 'GOT REPLY!!!!', data );
+					}
+					else {
+						console.log( 'GOT POST!!!', data );
 					}
 				},
 			});

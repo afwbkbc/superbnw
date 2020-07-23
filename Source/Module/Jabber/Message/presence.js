@@ -12,7 +12,11 @@ class presense extends require( '../Message' ) {
 	
 	Receive( data ) {
 		
-		this.C.SetOnline( data.attrs.from, data.children[ 0 ].children[ 0 ] );
+		if ( data.children[ 0 ] )
+			this.C.SetOnline( data.attrs.from, data.children[ 0 ].children[ 0 ] );
+		else {
+			this.C.SetOnline( data.attrs.from, data );
+		}
 		
 	}
 	

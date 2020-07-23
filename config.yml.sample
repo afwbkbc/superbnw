@@ -2,6 +2,9 @@ Jabber:
 	ID:
 	Password:
 
+Bnw:
+	Nickname:
+
 Sentinel:
 	Enabled: true
 	KillOnSight:
