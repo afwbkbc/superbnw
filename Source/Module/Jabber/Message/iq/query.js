@@ -24,7 +24,7 @@ class query extends require( './iq' ) {
 	
 	Receive( data ) {
 		super.Receive( data );
-		console.log( 'RECEIVED', data );
+		//console.log( 'RECEIVED', data );
 	}
 	
 }

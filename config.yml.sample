@@ -2,10 +2,11 @@ Jabber:
 	ID:
 	Password:
 
-Antishit:
+Sentinel:
 	Enabled: true
-	Blacklist:
+	KillOnSight:
 		- anonymous
+		- telegram
 
 GPG:
 	Enabled: false

@@ -46,6 +46,7 @@ class Engine {
 				},
 			})
 			
+			this.M.Bnw.AttachToConnection( this.M.Jabber );
 			this.M.Bnw.SetCallbacks({
 				OnConnect: () => {
 					this.Log( 1, 'Ready!' );
@@ -53,8 +54,15 @@ class Engine {
 				OnDisconnect: () => {
 					this.Log( 1, 'Connection lost.' );
 				},
+				OnReceive: ( data ) => {
+					if ( data.comment_id ) {
+						console.log( 'POST!!!!', data );
+					}
+					else {
+						console.log( 'REPLY!!!', data );
+					}
+				},
 			});
-			this.M.Bnw.AttachToConnection( this.M.Jabber );
 			
 			this.M.Jabber.Connect();
 			

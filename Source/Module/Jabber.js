@@ -232,7 +232,7 @@ class Jabber extends require( './Module' ) {
 	}
 	
 	SetServerFeatures( features ) {
-		this.Log( 4, 'Server features: ' + JSON.stringify( features ) );
+		//this.Log( 4, 'Server features: ' + JSON.stringify( features ) );
 		this.ServerFeatures = features;
 		
 		if ( this.ServerFeatures.indexOf( 'urn:xmpp:carbons:2' ) >= 0 ) {
