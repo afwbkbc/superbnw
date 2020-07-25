@@ -1,15 +1,5 @@
 class message extends require( '../Message' ) {
 	
-	Send( data ) {
-		
-/*		this.C.SendXml( [ 'presence', {}, [
-			[ 'priority', {}, [
-				data.priority,
-			]],
-		]]);*/
-		
-	}
-	
 	Receive( data ) {
 		
 		var body = data.getChild( 'body' );

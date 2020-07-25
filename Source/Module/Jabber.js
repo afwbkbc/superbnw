@@ -109,9 +109,6 @@ class Jabber extends require( './Module' ) {
 			return;
 		}
 		
-		//if ( stanza.attrs.from == this.From )
-			//return; // don't react to own messages
-		
 		this.ReceiveMessage( stanza.name, stanza );
 	}
 

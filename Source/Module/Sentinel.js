@@ -22,6 +22,7 @@ class Sentinel extends require( './Module' ) {
 			OnDelete: ( data ) => {
 				var message_id = data.reply_id ? data.reply_id : data.post_id;
 				var message = this.DeletedMessages[ message_id ];
+				
 				if ( typeof( message ) !== 'undefined' ) {
 					// it's confirmation of message deleted by us
 					

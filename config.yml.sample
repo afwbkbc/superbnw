@@ -1,23 +1,49 @@
+# configuration of your jabber account
 Jabber:
+
+	# your jabber id, such as: user@some-jabber-server.com, mandatory
 	ID:
+
+	# your jabber password, mandatory, won't be saved anywhere except for this file, needed so that SuperBnW can delete and repost on your behalf
 	Password:
 
+# configuration of your bnw account ( note: your jabber account should already be registered on bnw with command like "register somebnwnickname"
 Bnw:
+
+	# your bnw nickname, mandatory, needed for parsing of some messages to determine if they are yours or not
 	Nickname:
 
+# configuration of posts protection
 Sentinel:
+
+	# if enabled - replies to your posts will be checked and, if necessary, removed
 	Enabled: true
+
+	# blacklist of users that are not allowed to reply to your posts/comments, keep defaults if unsure
 	KillOnSight:
 		- anonymous
 		- telegram
 
+# configuration of pgp signatures
 PGP:
+
+	# if enabled - every your post will be enveloped in PGP SIGNED MESSAGE, with signature in the end ( note: this will result in removal of your original post and posting of new one, so ID returned by bnw won't be valid, do a lookup shortly after to find valid one )
 	Enabled: false
+
+	# you should have PGP key already configured in your system and know it's id, mandatory if PGP enabled, disabling passphrase is recommended, otherwise bot will have to ask you to enter it and you may not be around at that time
 	KeyId:
+
+	# you should place your public certificate of your PGP key somewhere on web where it's 1) accessible by anyone 2) location is trusted to belong to you, examples: repository on your github, your site, your ftp server, not mandatory but recommended, will be appended to end of your post if present
 	PublicKeyUrl:
-	
+
+# configuration of SuperBnW output	
 Logger:
+
+	# verbosity of output, 0 means completely silent, 1 is sufficient for most cases, 2-5 if you want to look 'under the hood'
 	LogLevel: 1
 
+# debug stuff
 Debug:
+
+	# if enabled - in case of error will show full backtrace of it, instead of just one line
 	Backtrace: false

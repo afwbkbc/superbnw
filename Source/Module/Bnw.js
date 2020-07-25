@@ -17,15 +17,12 @@ class Bnw extends require( './Module' ) {
 		
 		this.Connection.SetCallbacks({
 			OnConnect: () => {
-				
-				// init bnw?
-				
-				//this.RunCallbacks( 'OnConnect' );
+				// TODO: init?
 			},
 			OnDisconnect: () => {
 				
 				if ( this.IsConnected ) {
-					this.RunCallbacks( 'OnDisconnect' );
+					// TODO: deinit something?
 					this.IsConnected = false;
 				}
 			},
@@ -104,7 +101,7 @@ class Bnw extends require( './Module' ) {
 						
 						if ( msg.length === 0 ) {
 							if ( data.entities_at_start[ '*' ].length + data.entities_at_start[ '!' ].length > 1 )
-								// only single-value search is possible, if there are multiple - treat last one as text
+								// only single-value search is possible, if there are multiple then treat last one as text
 								msg = last_container + data.entities_at_start[ last_container ].pop();
 						}
 						
@@ -116,13 +113,9 @@ class Bnw extends require( './Module' ) {
 							// store text in queue so that when 'post posted' confirmation comes from bnw we can link id to it 
 							this.PendingPostedMessagesQueue.push( data );
 							
-							//console.log( 'POST|' + msg + '|', data );
-							
 						}
 						
 					}
-					
-					//console.log( 'TO BNW', message.from, message.to, message.text );
 					
 				}
 			},
@@ -148,12 +141,9 @@ class Bnw extends require( './Module' ) {
 						else
 							this.FixInterface();
 					}
-					else if ( 
-						(
-							message.text.indexOf( 'OK. Message ' ) === 0 ||
-							message.text.indexOf( 'OK. Comment ' ) === 0
-						) &&
-						( message.to_full !== this.Connection.From ) // don't trigger on own sent messages
+					else if (
+						message.text.indexOf( 'OK. Message ' ) === 0 ||
+						message.text.indexOf( 'OK. Comment ' ) === 0
 					) {
 						
 						var id_start = 'OK. Message '.length;
@@ -166,6 +156,10 @@ class Bnw extends require( './Module' ) {
 							tmp = tmp.substring( id_end + 1 );
 
 							if ( tmp.indexOf( 'has been delivered to ' ) >= 0 ) {
+								
+								if ( message.to_full === this.Connection.From )
+									return; // don't trigger on own sent messages
+								
 								// we posted post or reply
 								var slash_pos = id.indexOf( '/' );
 								var post_id = null;
@@ -203,7 +197,6 @@ class Bnw extends require( './Module' ) {
 								}
 							}
 							else if ( tmp.indexOf( 'removed.' ) === tmp.length - 'removed.'.length ) {
-
 								var data = {};
 								var slash_pos = id.indexOf( '/' );
 								if ( slash_pos >= 0 ) {
@@ -238,9 +231,6 @@ class Bnw extends require( './Module' ) {
 							
 							var results = message.text.substring( first_line_end + 1 ).trim();
 							
-							//console.log( 'SEARCH RESULTS', results );
-							//console.log( 'QUEUE', this.PendingPostedMessagesQueue );
-							
 							// try to find every pending message there ( and consume result if found )
 							for ( var k in this.PendingPostedMessagesQueue ) {
 								var m = this.PendingPostedMessagesQueue[ k ];
@@ -265,7 +255,7 @@ class Bnw extends require( './Module' ) {
 									var tags_clubs = first_line.substring( colon_pos + 1 ).trim();
 									
 									if ( tags_clubs.length > 0 ) {
-										// compare tags/clubs with ones we sent in message
+										// compare tags/clubs with those we sent in message
 										tags_clubs += ' '; // add space for easier searching
 										for ( var tck of '*!' ) {
 											for ( var kk in m.entities_at_start[ tck ] ) {
@@ -280,7 +270,6 @@ class Bnw extends require( './Module' ) {
 													// we found this tag/club, consume it from tags_clubs and check others
 													tags_clubs = tags_clubs.substring( 0, tc_pos ) + tags_clubs.substring( tc_pos + value.length );
 												}
-												//console.log( 'CHECK', '| ' + tck + tc + '|', tags_clubs, m );
 											}
 										}
 										if ( tags_clubs.length > 0 ) {
@@ -289,11 +278,12 @@ class Bnw extends require( './Module' ) {
 										}
 									}
 									
-									// we're still here, it means there were no tags/clubs or those that matched our expectations
+									// we're still here, it means there were no tags/clubs or those that were matched our expectations
 									// now compare text
 									var text = potential_match.substring( first_line_ends + 1, first_line_ends + 1 + m.text.length );
 
 									if ( text === m.text ) {
+										// it looks to be our message after all
 										
 										var last_line = potential_match.substring( first_line_ends + 1 + m.text.length + 1 );
 										var last_line_end = last_line.indexOf( '\n' );
@@ -465,19 +455,10 @@ class Bnw extends require( './Module' ) {
 					
 				}
 			},
-			// TODO: onuseroffline
+			// TODO: onuseroffline?
 		});
 
 	}
-	
-/**
-CREATEMESSAGE { text: 'test\ntest\ntest kek',
-  post_id: '#07XP2B',
-  tags: [ 'test1', 'test2' ],
-  clubs: [],
-  cb: { update_text: [Function: update_text] } }
-
- */	
 	
 	Send( payload ) {
 		this.Connection.Send( this.BnwJid, payload );
