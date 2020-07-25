@@ -12,20 +12,11 @@ class Sentinel extends require( './Module' ) {
 			return;
 		
 		this.Bnw.SetCallbacks({
-			OnSend: ( data ) => {
-				
-				//data.text += '\n\n\  // protected by SuperBnW ( https://github.com/afwbkbc/superbnw )\n';
-				
-			},
 			OnReceive: ( data ) => {
-				if ( data.reply_id ) {
-					//console.log( 'GOT REPLY!!!!', data );
+				if ( data.reply_id ) { // unfortunately we can only delete reply to own posts
 					if ( this.Config.KillOnSight.indexOf( data.author ) >= 0 ) {
 						this.DeleteMessage( data, '@' + data.author + ' is in blacklist' );
 					}
-				}
-				else {
-					//console.log( 'GOT POST!!!', data );
 				}
 			},
 			OnDelete: ( data ) => {

@@ -3,7 +3,7 @@ class Engine {
 	constructor() {
 		
 		this.M = {};
-		for( var m of [ 'Config', 'Logger', 'Jabber', 'Bnw', 'Sentinel' ] )
+		for( var m of [ 'Config', 'Logger', 'Jabber', 'Bnw', 'Sentinel', 'PGP' ] )
 			this.M[ m ] = new ( require( './Module/' + m ) )( m, this );
 		
 	}
@@ -61,6 +61,14 @@ class Engine {
 				OnDelete: ( data ) => {
 					var message_id = data.message.reply_id ? data.message.reply_id : data.message.post_id;
 					this.Log( 1, 'Destroyed ' + message_id + ' ( reason: ' + data.reason + ' )' );
+				},
+			});
+			
+			this.M.PGP.AttachToBnw( this.M.Bnw );
+			this.M.PGP.SetCallbacks({
+				OnSignature: ( data ) => {
+					var message_id = data.reply_id ? data.reply_id : data.post_id;
+					this.Log( 1, 'Signed: ' + message_id );
 				},
 			});
 			

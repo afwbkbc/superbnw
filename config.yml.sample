@@ -16,10 +16,6 @@ PGP:
 	KeyId:
 	PublicKeyUrl:
 	
-Upyachka:
-	Enabled: true
-	PreemptiveStrikes: false
-
 Logger:
 	LogLevel: 1
 

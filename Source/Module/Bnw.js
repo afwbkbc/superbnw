@@ -80,12 +80,12 @@ class Bnw extends require( './Module' ) {
 							var value = msg.substring( 1, end );
 							var container = data.entities_at_start[ msg[ 0 ] ];
 							if ( typeof( container ) === 'object' && container !== null ) {
-								if ( container.length < 5 ) {
+								if ( data.entities_at_start[ '*' ].length + data.entities_at_start[ '!' ].length < 5 ) {
 									last_container = msg[ 0 ];
 									container.push( value );
 								}
 								else {
-									// only 5 tags or clubs allowed, treat remaining part as text
+									// only 5 of tags+clubs allowed, treat remaining part as text
 									break;
 								}
 							}
@@ -127,6 +127,7 @@ class Bnw extends require( './Module' ) {
 				}
 			},
 			OnReceive: ( message ) => {
+				
 				if ( message.to !== this.Connection.Config.ID )
 					return; // something wrong
 				
@@ -182,12 +183,12 @@ class Bnw extends require( './Module' ) {
 								if ( post_id && post_id.length === this.BnwPostIdLength && ( !reply_id || reply_id.length === this.BnwReplyIdLength ) ) {
 									
 									// get message body from bnw
-									this.GetMessage( id, ( data ) => {
+									this.GetMessage( id, async ( data ) => {
 
 										var original_text = data.text;
 										
 										// pass everything to callbacks
-										this.RunCallbacks( 'OnSend', data );
+										await this.RunCallbacks( 'OnSend', data );
 										
 										if ( data.text != original_text ) {
 											// somebody updated message text, need to update it on bnw
@@ -447,8 +448,9 @@ class Bnw extends require( './Module' ) {
 							}
 						}
 						
-						if ( callback )
+						if ( callback ) {
 							this.RunCallbacks( callback, data );
+						}
 						else {
 							//console.log( 'INVALID/MALFORMED/UNSUPPORTED MESSAGE', message.text );
 						}

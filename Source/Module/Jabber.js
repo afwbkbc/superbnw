@@ -146,11 +146,11 @@ class Jabber extends require( './Module' ) {
 	
 	Send( to, text ) {
 		this.Log( 3, 'Sent: <' + to + '> ' + text.replace( /\n/g, '\\n' ) );
-		this.Client.send(
-			this.XML( 'message', { type: 'chat', to: to, id: this.MD5( Math.random() ) },
-				this.XML( 'body', {}, text )
-			)
+		var xml = this.XML( 'message', { type: 'chat', to: to, id: this.MD5( Math.random() ) },
+			this.XML( 'body', {}, text )
 		);
+		this.Log( 4, 'Sent XML: ' + xml.toString().replace( /\n/g, '\\n' ) );
+		this.Client.send( xml );
 		this.RunCallbacks( 'OnSend', this.MessageAttrs({
 			from: this.From,
 			to: to,

@@ -15,10 +15,11 @@ class Module {
 		}
 	}
 	
-	RunCallbacks( type, ...args ) {
+	async RunCallbacks( type, ...args ) {
 		if ( typeof( this.Callbacks[ type ] ) !== 'undefined' )
-			for ( var k in this.Callbacks[ type ] )
-				this.Callbacks[ type ][ k ].apply( this, args );
+			for ( var k in this.Callbacks[ type ] ) {
+				await this.Callbacks[ type ][ k ].apply( this, args );
+			}
 	}
 	
 	Configure( config ) {
