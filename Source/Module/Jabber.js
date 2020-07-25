@@ -201,10 +201,10 @@ class Jabber extends require( './Module' ) {
 		}, reconnect_seconds * 1000 );
 	}
 	
-	SendPresence() {
+	SendPresence( priority ) {
 		this.Log( 2, 'Broadcasting presence' );
 		this.SendMessage( 'presence', {
-			priority: 100,
+			priority: priority,
 		});
 	}
 	
@@ -234,24 +234,29 @@ class Jabber extends require( './Module' ) {
 		//this.Log( 4, 'Server features: ' + JSON.stringify( features ) );
 		this.ServerFeatures = features;
 		
+		var xep_0280_failed = () => {
+			this.Log( 1, 'Warning! Failed to enable XEP-0280 on your server ( ' + this.Server + ' ), continuing without, bot may be unreliable if used simultaneously with another xmpp client on same account!' );
+			this.SendPresence( 127 ); // use maximum priority to increase chances of receiving messages ( other clients may lose messages but security is more important, right? )
+		}
+		
 		if ( this.ServerFeatures.indexOf( 'urn:xmpp:carbons:2' ) >= 0 ) {
 			
 			this.Log( 2, 'Enabling XEP-0280' );
+			
 			this.SendIq( 'enable', {
 				xmlns: 'urn:xmpp:carbons:2',
 			}, ( response ) => {
 				if ( response.error ) {
 					this.Log( 3, 'Error: ' + response.error );
-					this.Log( 1, 'Warning! Failed to enable XEP-0280 on your server ( ' + this.Server + ' ), continuing without, bot may be unreliable if used simultaneously with another xmpp client on same account!' );
+					xep_0280_failed();
 				}
-				this.SendPresence();
+				else
+					this.SendPresence( 1 ); // use low priority to avoid interfering with non-XEP-0280 clients, messages will be relayed to us anyway
 			});
 			
 		}
-		else {
-			this.Log( 1, 'Warning! Your xmpp server ( ' + this.Server + ' ) does not support XEP-0280, bot may be unreliable if used simultaneously with another xmpp client on same account!' );
-			this.SendPresence();
-		}
+		else
+			xep_0280_failed();
 	}
 }
 
