@@ -196,7 +196,7 @@ class Bnw extends require( './Module' ) {
 									return;
 								}
 							}
-							else if ( tmp.indexOf( 'removed.' ) === tmp.length - 'removed.'.length ) {
+							else if ( tmp.indexOf( ' removed.' ) === tmp.length - ' removed.'.length ) {
 								var data = {};
 								var slash_pos = id.indexOf( '/' );
 								if ( slash_pos >= 0 ) {
@@ -234,6 +234,8 @@ class Bnw extends require( './Module' ) {
 							// try to find every pending message there ( and consume result if found )
 							for ( var k in this.PendingPostedMessagesQueue ) {
 								var m = this.PendingPostedMessagesQueue[ k ];
+								
+								var m_text = m.text.trim();
 								
 								// message starts with @username
 								var start_pos;
@@ -282,12 +284,12 @@ class Bnw extends require( './Module' ) {
 									
 									// we're still here, it means there were no tags/clubs or those that were matched our expectations
 									// now compare text
-									var text = potential_match.substring( first_line_ends + 1, first_line_ends + 1 + m.text.length );
+									var text = potential_match.substring( first_line_ends + 1, first_line_ends + 1 + m_text.length );
 
-									if ( text === m.text ) {
+									if ( text === m_text ) {
 										// it looks to be our message after all
 										
-										var last_line = potential_match.substring( first_line_ends + 1 + m.text.length + 1 );
+										var last_line = potential_match.substring( first_line_ends + 1 + m_text.length + 1 );
 										var last_line_end = last_line.indexOf( '\n' );
 										if ( last_line_end < 0 )
 											last_line_end = last_line.length;
@@ -401,7 +403,7 @@ class Bnw extends require( './Module' ) {
 																
 																	// in replied messages bnw prepends some stuff at beginning
 																	// but it's enough to compare ending
-																	if ( data.text.substring( data.text.length - m.text.length ) === m.text ) {
+																	if ( data.text.substring( data.text.length - m_text.length ) === m.text ) {
 																		
 																		// all good, update pending message, cleanup and call callbacks
 																		
