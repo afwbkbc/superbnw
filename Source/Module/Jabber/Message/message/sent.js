@@ -9,7 +9,7 @@ class sent extends require( './message' ) {
 		var body = message.getChild( 'body' );
 		
 		if ( body ) {
-			this.C.Log( 2, 'Sent: <' + message.attrs.from + '> ' + body.text() );
+			this.C.Log( 3, 'Sent: <' + message.attrs.from + '> ' + body.text().replace( /\n/g, '\\n' ) );
 			this.C.RunCallbacks( 'OnSend', this.C.MessageAttrs( message.attrs, body.text() ) );
 		}
 		

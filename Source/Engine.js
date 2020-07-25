@@ -3,7 +3,7 @@ class Engine {
 	constructor() {
 		
 		this.M = {};
-		for( var m of [ 'Config', 'Logger', 'Jabber', 'Bnw' ] )
+		for( var m of [ 'Config', 'Logger', 'Jabber', 'Bnw', 'Sentinel' ] )
 			this.M[ m ] = new ( require( './Module/' + m ) )( m, this );
 		
 	}
@@ -54,22 +54,13 @@ class Engine {
 				OnDisconnect: () => {
 					this.Log( 1, 'Connection lost.' );
 				},
-				OnSend: ( data ) => {
-					if ( data.reply_id ) {
-						console.log( 'SENT REPLY!!!!', data );
-					}
-					else {
-						console.log( 'SENT POST!!!', data );
-					}
-					this.M.Bnw.Send( 'D ' + ( data.reply_id ? data.reply_id : data.post_id ) );
-				},
-				OnReceive: ( data ) => {
-					if ( data.reply_id ) {
-						console.log( 'GOT REPLY!!!!', data );
-					}
-					else {
-						console.log( 'GOT POST!!!', data );
-					}
+			});
+			
+			this.M.Sentinel.AttachToBnw( this.M.Bnw );
+			this.M.Sentinel.SetCallbacks({
+				OnDelete: ( data ) => {
+					var message_id = data.message.reply_id ? data.message.reply_id : data.message.post_id;
+					this.Log( 1, 'Destroyed ' + message_id + ' ( reason: ' + data.reason + ' )' );
 				},
 			});
 			

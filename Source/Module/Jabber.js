@@ -43,6 +43,8 @@ class Jabber extends require( './Module' ) {
 			password: this.Config.Password,
 		});
 		
+		this.Log( 2, 'Connecting...' );
+		
 		this.Client
 			.on( 'error', ( e ) => {
 				this.RunCallbacks( 'OnError', e.toString() );
@@ -56,7 +58,7 @@ class Jabber extends require( './Module' ) {
 				this.SendIq( 'query' );
 			})
 			.on('status', (status, value) => {
-				this.Log( 2, 'Status: ' + status );
+				this.Log( 3, 'Status: ' + status );
 			})
 			.on('stanza', ( stanza ) => {
 				this.ReceiveStanza( stanza );
@@ -143,7 +145,7 @@ class Jabber extends require( './Module' ) {
 	}
 	
 	Send( to, text ) {
-		this.Log( 2, 'Sent: <' + to + '> ' + text );
+		this.Log( 3, 'Sent: <' + to + '> ' + text.replace( /\n/g, '\\n' ) );
 		this.Client.send(
 			this.XML( 'message', { type: 'chat', to: to, id: this.MD5( Math.random() ) },
 				this.XML( 'body', {}, text )
@@ -171,7 +173,7 @@ class Jabber extends require( './Module' ) {
 		
 		var xml = genxml( data );
 		
-		this.Log( 3, 'Send: ' + xml.toString() );
+		this.Log( 4, 'Sent XML: ' + xml.toString() );
 		
 		this.Client.send( xml );
 	}

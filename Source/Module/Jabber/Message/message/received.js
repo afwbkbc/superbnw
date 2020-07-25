@@ -9,7 +9,7 @@ class received extends require( './message' ) {
 		var body = message.getChild( 'body' );
 		
 		if ( body ) {
-			this.C.Log( 2, 'Received: <' + message.attrs.from + '> ' + body.text() );
+			this.C.Log( 3, 'Received: <' + message.attrs.from + '> ' + body.text().replace( /\n/g, '\\n' ) );
 			this.C.RunCallbacks( 'OnReceive', this.C.MessageAttrs( message.attrs, body.text() ) );
 		}
 		

@@ -10,6 +10,7 @@ Sentinel:
 	KillOnSight:
 		- anonymous
 		- telegram
+	AddSignature: true
 
 GPG:
 	Enabled: false

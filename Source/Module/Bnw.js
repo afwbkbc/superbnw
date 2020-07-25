@@ -148,15 +148,17 @@ class Bnw extends require( './Module' ) {
 							this.FixInterface();
 					}
 					else if ( 
-						message.text.indexOf( 'OK. Message #' ) === 0 ||
-						message.text.indexOf( 'OK. Comment #' ) === 0
+						message.text.indexOf( 'OK. Message ' ) === 0 ||
+						message.text.indexOf( 'OK. Comment ' ) === 0
 					) {
 						
-						var id_start = message.text.indexOf( '#' );
+						var id_start = 'OK. Message '.length;
+						if ( message.text[ id_start ] === '#' ) // sometimes message starts with # but not always
+							id_start++;
 						var tmp = message.text.substring( id_start );
 						var id_end = tmp.indexOf( ' ' );
 						if ( id_end >= 0 ) {
-							var id = tmp.substring( 0, id_end );
+							var id = '#' + tmp.substring( 0, id_end );
 							tmp = tmp.substring( id_end + 1 );
 
 							if ( tmp.indexOf( 'has been delivered to ' ) >= 0 ) {
@@ -185,6 +187,23 @@ class Bnw extends require( './Module' ) {
 									});
 									return;
 								}
+							}
+							else if ( tmp.indexOf( 'removed.' ) === tmp.length - 'removed.'.length ) {
+
+								var data = {};
+								var slash_pos = id.indexOf( '/' );
+								if ( slash_pos >= 0 ) {
+									// reply
+									data.post_id = id.substring( 0, slash_pos );
+									data.reply_id = id;
+								}
+								else {
+									// post
+									data.post_id = id;
+								}
+								
+								this.Log( 3, 'Deleted: <' + id + '>' );
+								this.RunCallbacks( 'OnDelete', data );
 							}
 							
 						}
@@ -401,6 +420,8 @@ class Bnw extends require( './Module' ) {
 														}
 														else {
 															
+															this.Log( 3, 'Received: <' + id + '> ' + data.text.replace( /\n/g, '\\n' ) );
+															
 															// return data to callbacks
 															callback = 'OnReceive';
 														}
@@ -416,8 +437,9 @@ class Bnw extends require( './Module' ) {
 						
 						if ( callback )
 							this.RunCallbacks( callback, data );
-						else
-							console.log( 'INVALID/MALFORMED/UNSUPPORTED MESSAGE', message.text );
+						else {
+							//console.log( 'INVALID/MALFORMED/UNSUPPORTED MESSAGE', message.text );
+						}
 					}
 				}
 			},
