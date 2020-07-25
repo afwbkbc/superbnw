@@ -10,11 +10,11 @@ Sentinel:
 	KillOnSight:
 		- anonymous
 		- telegram
-	AddSignature: true
 
-GPG:
+PGP:
 	Enabled: false
-	KeyPath:
+	KeyId:
+	PublicKeyUrl:
 	
 Upyachka:
 	Enabled: true

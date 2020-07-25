@@ -148,8 +148,11 @@ class Bnw extends require( './Module' ) {
 							this.FixInterface();
 					}
 					else if ( 
-						message.text.indexOf( 'OK. Message ' ) === 0 ||
-						message.text.indexOf( 'OK. Comment ' ) === 0
+						(
+							message.text.indexOf( 'OK. Message ' ) === 0 ||
+							message.text.indexOf( 'OK. Comment ' ) === 0
+						) &&
+						( message.to_full !== this.Connection.From ) // don't trigger on own sent messages
 					) {
 						
 						var id_start = 'OK. Message '.length;
@@ -181,8 +184,18 @@ class Bnw extends require( './Module' ) {
 									// get message body from bnw
 									this.GetMessage( id, ( data ) => {
 
+										var original_text = data.text;
+										
 										// pass everything to callbacks
 										this.RunCallbacks( 'OnSend', data );
+										
+										if ( data.text != original_text ) {
+											// somebody updated message text, need to update it on bnw
+											
+											// bnw "protocol" does not support editing of existing messages, so delete/repost is our only choice
+											this.DeleteMessage( id );
+											this.CreateMessage( data );
+										}
 										
 									});
 									return;
@@ -420,12 +433,11 @@ class Bnw extends require( './Module' ) {
 														}
 														else {
 															
-															this.Log( 3, 'Received: <' + id + '> ' + data.text.replace( /\n/g, '\\n' ) );
+															this.Log( 3, 'Received: <' + id + '> @' + data.author + ': ' + data.text.replace( /\n/g, '\\n' ) );
 															
 															// return data to callbacks
 															callback = 'OnReceive';
 														}
-														
 													}
 												}
 											}
@@ -456,8 +468,35 @@ class Bnw extends require( './Module' ) {
 
 	}
 	
-	Send( text ) {
-		this.Connection.Send( this.BnwJid, text );
+/**
+CREATEMESSAGE { text: 'test\ntest\ntest kek',
+  post_id: '#07XP2B',
+  tags: [ 'test1', 'test2' ],
+  clubs: [],
+  cb: { update_text: [Function: update_text] } }
+
+ */	
+	
+	Send( payload ) {
+		this.Connection.Send( this.BnwJid, payload );
+	}
+	
+	CreateMessage( data ) {
+		
+		var payload = '';
+		if ( data.reply_to )
+			payload += data.reply_to + ' ';
+		for ( var c of data.clubs )
+			payload += '!' + c + ' ';
+		for ( var t of data.tags )
+			payload += '*' + t + ' ';
+		payload += data.text;
+		
+		this.Send( payload );
+	}
+	
+	DeleteMessage( message_id ) {
+		this.Send( 'D ' + message_id );
 	}
 	
 	GoOnline() {

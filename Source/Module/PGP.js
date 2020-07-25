@@ -1,4 +1,4 @@
-class Sentinel extends require( './Module' ) {
+class PGP extends require( './Module' ) {
 	
 	Init() {
 		
@@ -14,7 +14,7 @@ class Sentinel extends require( './Module' ) {
 		this.Bnw.SetCallbacks({
 			OnSend: ( data ) => {
 				
-				//data.text += '\n\n\  // protected by SuperBnW ( https://github.com/afwbkbc/superbnw )\n';
+				data.text += '\n\n\  // protected by SuperBnW ( https://github.com/afwbkbc/superbnw )\n';
 				
 			},
 			OnReceive: ( data ) => {
