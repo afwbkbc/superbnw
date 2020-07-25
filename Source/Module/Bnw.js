@@ -403,7 +403,7 @@ class Bnw extends require( './Module' ) {
 																
 																	// in replied messages bnw prepends some stuff at beginning
 																	// but it's enough to compare ending
-																	if ( data.text.substring( data.text.length - m_text.length ) === m.text ) {
+																	if ( data.text.substring( data.text.length - m.text.length ) === m.text ) {
 																		
 																		// all good, update pending message, cleanup and call callbacks
 																		
