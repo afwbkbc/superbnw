@@ -241,6 +241,8 @@ class Bnw extends require( './Module' ) {
 									
 									var potential_match = results.substring( start_pos );
 									
+									results = results.substring( start_pos + 1 );
+									
 									var first_line_ends = potential_match.indexOf( '\n' );
 									if ( first_line_ends < 0 ) {
 										
